@@ -7,16 +7,29 @@ class netbox(utils):
 
     def __init__(
         self,
-        ip="localhost",
-        port=8000,
-        token="0123456789abcdef0123456789abcdef01234567",
+        ip=None,
+        port=None,
+        token=None,
         yamlfilename=None,
         board_name=None,
     ):
-        self.nb = pynetbox.api(f"http://{ip}:{port}", token=token)
+        self.netbox_server = None
+        self.netbox_server_port = None
+        self.netbox_api_token = None
         self.update_defaults_from_yaml(
             yamlfilename, __class__.__name__, board_name=board_name
         )
+
+        if ip:
+            self.netbox_server = ip
+        if port:
+            self.netbox_server_port = port
+        if token:
+            self.netbox_api_token = token
+
+        self.nb = pynetbox.api(\
+         f"http://{self.netbox_server}:{self.netbox_server_port}",
+            token=self.netbox_api_token)
 
     def get_mac_from_asset_tag(self, asset_tag):
         dev = self.nb.dcim.devices.get(asset_tag=asset_tag)
@@ -24,3 +37,23 @@ class netbox(utils):
             raise Exception(f"No devices for with asset tage: {asset_tag}")
         intf = self.nb.dcim.interfaces.get(device_id=dev.id)
         return intf.mac_address
+
+    def get_uart_address_from_asset_tag(self, asset_tag):
+        dev = self.nb.dcim.devices.get(asset_tag=asset_tag)
+        if not dev:
+            raise Exception(f"No devices for with asset tage: {asset_tag}")
+        port = self.nb.dcim.console_ports.get(device_id=dev.id)
+        return port.label
+
+    def set_ip_address_with_asset_tag(self, asset_tag, address):
+        dev = self.nb.dcim.devices.get(asset_tag=asset_tag)
+        if not dev:
+            raise Exception(f"No devices for with asset tage: {asset_tag}assigned")
+        intf = self.nb.dcim.interfaces.get(device_id=dev.id)
+        if not intf:
+            raise Exception(f"{dev.id} has no assigned interfaces")
+        ipas = self.nb.ipam.ip_addresses.all()
+        for ipa in ipas:
+            if ipa.assigned_object.id == intf.id:
+                ipa.address = address + '/24'
+                ipa.save()
