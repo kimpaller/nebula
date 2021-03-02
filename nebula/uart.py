@@ -48,7 +48,10 @@ class uart(utils):
         dhcp=False,
         yamlfilename=None,
         board_name=None,
+        usr='analog',
+        pwd='analog'
     ):
+        self.usr = usr
         self.com = []  # Preset incase __del__ is called before set
         self.tftpserverip = tftpserverip
         self.address = address
@@ -62,6 +65,8 @@ class uart(utils):
         self.dhcp = dhcp
         self.max_read_time = 30
         self.fds_to_skip = ["Digilent"]
+        self.usr = usr
+        self.pwd = pwd
         self.update_defaults_from_yaml(
             yamlfilename, __class__.__name__, board_name=board_name
         )
@@ -336,6 +341,12 @@ class uart(utils):
         if restart:
             self.start_log(logappend=True)
         for d in data:
+            #incase asking of credentials
+            if 'password' in d:
+                print('Asking for password.')
+                self._write_data(self.pwd)
+                #TODO: Add some routine to capture response of
+                # command after entering password
             if isinstance(d, list):
                 for c in d:
                     log.info("command response: "+c)
