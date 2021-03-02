@@ -588,6 +588,88 @@ uart.add_task(set_local_nic_ip_from_usbdev)
 #############################################
 @task(
     help={
+        "update_mac": "Set to true if board mac address will be updated from netbox definition.",
+        "yamlfilename": "Path to yaml config file. Default: /etc/default/nebula",
+        "board_name": "Name of DUT design (Ex: zynq-zc706-adv7511-fmcdaq2). Require for multi-device config files",
+    }
+)
+def sync_config_from_netbox(
+    c,
+    update_mac=False,
+    yamlfilename="/etc/default/nebula",
+    board_name=None,
+    
+):
+    """ Update config values on the board based on netbox definitions  """
+    if not board_name:
+        raise Exception("Please supply board name.\
+            Asset tag must be supplied as board name for now")
+
+    n = nebula.netbox(yamlfilename=yamlfilename, board_name=board_name)
+    mac_address = n.get_mac_from_asset_tag(board_name)
+    port_address = n.get_uart_address_from_asset_tag(board_name)
+
+    u = nebula.uart(address=port_address, yamlfilename=yamlfilename, board_name=board_name)
+    ip = u.get_ip_address()
+
+    #TODO: get pdu info from config and update yamlfile
+    # pdu_type
+    # pdu_ip
+    # outlet
+
+    # update yaml based on netbox definitions
+    h = nebula.helper()
+    h.update_yaml(
+        configfilename=yamlfilename,
+        section='uart-config',
+        field='address',
+        new_value=port_address,
+        board_name=board_name,
+    )
+    
+    # update mac address from netbox definition 
+    if mac_address and update_mac:
+        # # enter into power cycle
+        # p = nebula.pdu(
+        #     yamlfilename=yamlfilename,
+        #     board_name=board_name,
+        # )
+        # p.power_cycle_board()
+        # reboot device over uart
+        cmd = "sudo reboot"
+        u.get_uart_command_for_linux(cmd, "")
+        u._enter_uboot_menu_from_power_cycle()
+        cmd='setenv ethaddr {}'.format(mac_address)
+        u._write_data(cmd)
+        u._read_until_done(done_string="zynq-uboot")
+        cmd='saveenv'
+        u._write_data(cmd)
+        u._read_until_done(done_string="zynq-uboot")
+        cmd='boot'
+        u._write_data(cmd)
+        time.sleep(120)
+        new_ip = u.get_ip_address()
+        print('mac address {} is set succesfully.'.format(mac_address))
+        if ip != new_ip:
+            print('IP has been set from {} to {}'.format(ip, new_ip))
+            ip = new_ip
+
+    #update config
+    h.update_yaml(
+        configfilename=yamlfilename,
+        section='network-config',
+        field='dutip',
+        new_value=ip,
+        board_name=board_name,
+    )   
+    n.set_ip_address_with_asset_tag(board_name, ip)
+
+netbox = Collection("netbox")
+netbox.add_task(sync_config_from_netbox)
+
+#############################################
+@task(
+    help={
         "ip": "IP address of board",
         "user": "Board username. Default: root",
         "password": "Password for board. Default: analog",
@@ -683,6 +765,7 @@ ns.add_task(update_config)
 
 ns.add_collection(builder)
 ns.add_collection(uart)
+ns.add_collection(netbox)
 ns.add_collection(net)
 ns.add_collection(pdu)
 ns.add_collection(manager)
