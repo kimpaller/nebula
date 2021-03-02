@@ -81,16 +81,15 @@ class helper:
                                     names.append(c["board-name"])
             print(", ".join(names))
             return
-        configs = cfg
 
         updated = False
         try:
-            for i, f in enumerate(configs[section]):
+            for i, f in enumerate(cfg[section]):
                 if field in list(f.keys()):
                     updated = True
-                    value = configs[section][i][field]
+                    value = cfg[section][i][field]
                     if new_value:
-                        configs[section][i][field] = new_value
+                        cfg[section][i][field] = new_value
                         print(
                             "Field",
                             field,
@@ -109,6 +108,9 @@ class helper:
         except:
             raise Exception("Field or section does not exist")
         if new_value:
+            # only rewrite the affected device in case of multidevice config
+            if board_name in configs.keys():
+                configs[board_name] = cfg
             self._write_config_file(configfilename, configs)
 
     def create_config_interactive(self):
