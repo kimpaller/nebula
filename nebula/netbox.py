@@ -42,7 +42,10 @@ class netbox(utils):
         dev = self.nb.dcim.devices.get(asset_tag=asset_tag)
         if not dev:
             raise Exception(f"No devices for with asset tage: {asset_tag}")
-        port = self.nb.dcim.console_ports.get(device_id=dev.id)
+        ports = self.nb.dcim.console_ports.filter(device_id=dev.id)
+        for ps in ports:
+            if ps.name == 'uart':
+                port = ps
         return port.label
 
     def set_ip_address_with_asset_tag(self, asset_tag, address):
