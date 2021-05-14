@@ -641,6 +641,18 @@ class manager:
             devtreepath=devtreepath
         )
 
+    def shutdown_board(self):
+        self.monitor[0].print_to_console = False
+        ret = self.monitor[0].get_uart_command_for_linux('\r\n', "root@analog")
+        try:
+            if ret:
+                self.monitor[0]._write_data("shutdown now")
+                time.sleep(10)
+                self.power.power_down_board()
+            else:
+                log.error("Cannot continue command since linux is not running or not root")
+        except Exception as ex:
+            log.error(ex)
 
 if __name__ == "__main__":
     # import pathlib

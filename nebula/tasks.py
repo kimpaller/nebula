@@ -651,6 +651,19 @@ def update_boot_files_uart(
         devtree_filename=devtreepath,
     )
 
+@task(
+    help={
+        "yamlfilename": "Path to yaml config file. Default: /etc/default/nebula",
+        "board_name": "Name of DUT design (Ex: zynq-zc706-adv7511-fmcdaq2). Require for multi-device config files",
+    },
+)
+def shutdown_board_uart(
+    c,
+    yamlfilename="/etc/default/nebula",
+    board_name=None,        
+):
+    m = nebula.manager(configfilename=yamlfilename, board_name=board_name)
+    m.shutdown_board()
 
 uart = Collection("uart")
 uart.add_task(restart_board_uart, name="restart_board")
@@ -661,6 +674,7 @@ uart.add_task(get_carriername)
 uart.add_task(get_mezzanine)
 uart.add_task(update_boot_files_uart, name="update_boot_files")
 uart.add_task(set_local_nic_ip_from_usbdev)
+uart.add_task(shutdown_board_uart, name="shutdown_board")
 
 #############################################
 @task(
