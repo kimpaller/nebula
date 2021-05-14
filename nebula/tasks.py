@@ -221,9 +221,28 @@ def power_cycle(
 
     p.power_cycle_board()
 
+@task(
+    help={
+        "yamlfilename": "Path to yaml config file. Default: /etc/default/nebula",
+        "board_name": "Name of DUT design (Ex: zynq-zc706-adv7511-fmcdaq2). Require for multi-device config files",
+    },
+)
+def power_board(
+    c,
+    yamlfilename="/etc/default/nebula",
+    board_name=None,
+):
+    """ Power on board with PDU """
+    p = nebula.pdu(
+        yamlfilename=yamlfilename,
+        board_name=board_name,
+    )
+    p.power_on_board()
+
 
 pdu = Collection("pdu")
 pdu.add_task(power_cycle)
+pdu.add_task(power_board)
 
 #############################################
 @task()
