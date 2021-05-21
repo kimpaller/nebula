@@ -379,15 +379,19 @@ def update_boot_files_manager(
     """ Update boot files through u-boot menu (Assuming board is running) """
     m = nebula.manager(configfilename=yamlfilename, board_name=board_name)
 
-    if not folder:
-        m.board_reboot_auto(
-            system_top_bit_path=system_top_bit_path,
-            bootbinpath=bootbinpath,
-            uimagepath=uimagepath,
-            devtreepath=devtreepath,
-        )
-    else:
-        m.board_reboot_auto_folder(folder, design_name=board_name)
+    try:
+        if not folder:
+            m.board_reboot_auto(
+                system_top_bit_path=system_top_bit_path,
+                bootbinpath=bootbinpath,
+                uimagepath=uimagepath,
+                devtreepath=devtreepath,
+            )
+        else:
+            m.board_reboot_auto_folder(folder, design_name=board_name)
+    except Exception as ex:
+        print('You are the only exception')
+        print(str(ex))
 
 
 manager = Collection("manager")
