@@ -632,6 +632,11 @@ def set_static_ip(
         u.print_to_console = False
         u.set_ip_static(ip, nic)
         del u
+        p = nebula.pdu(
+            yamlfilename=yamlfilename, board_name=board_name
+        )
+        p.power_cycle_board()
+        del p
     except Exception as ex:
         print(ex)
 
