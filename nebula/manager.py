@@ -648,11 +648,13 @@ class manager:
             if ret:
                 self.monitor[0]._write_data("shutdown now")
                 time.sleep(10)
-                self.power.power_down_board()
             else:
                 log.error("Cannot continue command since linux is not running or not root")
         except Exception as ex:
             log.error(ex)
+        finally:
+            # force shutdown boards via pdu
+            self.power.power_down_board()
 
 if __name__ == "__main__":
     # import pathlib
