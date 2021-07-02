@@ -689,6 +689,22 @@ def shutdown_board_uart(
     m = nebula.manager(configfilename=yamlfilename, board_name=board_name)
     m.shutdown_board()
 
+@task(
+    help={
+        "yamlfilename": "Path to yaml config file. Default: /etc/default/nebula",
+        "board_name": "Name of DUT design (Ex: zynq-zc706-adv7511-fmcdaq2). Require for multi-device config files",
+    },
+)
+def update_adi_tools(
+    c,
+    yamlfilename="/etc/default/nebula",
+    board_name=None
+):
+    u = nebula.uart(yamlfilename=yamlfilename, board_name=board_name)
+    u.print_to_console = False
+    u.update_adi_tools()
+    del u
+
 uart = Collection("uart")
 uart.add_task(restart_board_uart, name="restart_board")
 uart.add_task(get_ip)
@@ -699,6 +715,7 @@ uart.add_task(get_mezzanine)
 uart.add_task(update_boot_files_uart, name="update_boot_files")
 uart.add_task(set_local_nic_ip_from_usbdev)
 uart.add_task(shutdown_board_uart, name="shutdown_board")
+uart.add_task(update_adi_tools)
 
 #############################################
 @task(

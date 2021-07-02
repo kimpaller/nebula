@@ -345,6 +345,20 @@ class uart(utils):
             data = self._read_for_time(period=1)
             self.start_log(logappend=True)
 
+    def update_adi_tools(self):
+        restart = False
+        if self.listen_thread_run:
+            restart = True
+            self.stop_log()
+        # Check if we need to login to the console
+        if not self._check_for_login():
+            raise Exception("Console inaccessible due to login failure")
+        cmd = "adi_update_tools.sh"
+        self._write_data(cmd)
+        self._read_until_done(done_string='root@analog',max_time=1800)
+        if restart:
+            self.start_log(logappend=True)
+
     def request_ip_dhcp(self, nic="eth0"):
         restart = False
         if self.listen_thread_run:
