@@ -700,6 +700,7 @@ def update_adi_tools(
     yamlfilename="/etc/default/nebula",
     board_name=None
 ):
+    """ Update board tools using the built in adi_update_tools.sh"""
     u = nebula.uart(yamlfilename=yamlfilename, board_name=board_name)
     u.print_to_console = False
     u.update_adi_tools()
